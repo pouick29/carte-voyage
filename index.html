@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Jusqu'où voyagent les créations de La Petite Fée Bretonne ?</title>
+<title>Jusqu'où voyagent les créations de La petite fée bretonne ?</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600&family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet">
@@ -13,13 +13,13 @@
 <main class="page">
 
   <header class="entete">
-    <h1>Jusqu'où voyagent les créations de La Petite Fée Bretonne ?</h1>
+    <h1>Jusqu'où voyagent les créations de La petite fée bretonne ?</h1>
     <p class="sous-titre">Mon défi : faire voyager mes créations dans les 101 départements français… et pourquoi pas au-delà de nos frontières ? 🩷</p>
   </header>
 
   <div class="onglets" role="tablist">
     <button class="onglet" role="tab" id="t-france" aria-selected="true" aria-controls="p-france">Mon tour de France 🩷</button>
-    <button class="onglet" role="tab" id="t-monde" aria-selected="false" aria-controls="p-monde">La Petite Fée Bretonne voyage dans le monde 🌍</button>
+    <button class="onglet" role="tab" id="t-monde" aria-selected="false" aria-controls="p-monde">La petite fée bretonne voyage dans le monde 🌍</button>
   </div>
 
   <!-- ===== FRANCE ===== -->
@@ -85,11 +85,11 @@ function afficherInfo(jeu, code, nom) {
   const p = document.createElement('p');
   if (jeu === 'france') {
     p.textContent = conquis
-      ? 'Département conquis ! 🩷 Une création de La Petite Fée Bretonne a déjà voyagé jusqu’ici !'
+      ? 'Département conquis ! 🩷 Une création de La petite fée bretonne a déjà voyagé jusqu’ici !'
       : 'Ce département attend encore sa première création ! Et si c’était grâce à toi ? 🧚‍♀️';
   } else {
     p.textContent = conquis
-      ? 'Pays conquis ! 🩷 Une création de La Petite Fée Bretonne a déjà voyagé jusqu’ici !'
+      ? 'Pays conquis ! 🩷 Une création de La petite fée bretonne a déjà voyagé jusqu’ici !'
       : 'Ce pays attend encore sa première création ! Et si c’était grâce à toi ? 🧚‍♀️';
   }
   zone.append(h, p);

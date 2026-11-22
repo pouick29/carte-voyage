@@ -1,4 +1,4 @@
-/* Carte interactive — La Petite Fée Bretonne
+/* Carte interactive — La petite fée bretonne
    Moteur d'affichage partagé par la page publique et la page admin. */
 (function () {
   var NS = 'http://www.w3.org/2000/svg';

@@ -1,5 +1,5 @@
 // ============================================================
-//  RÉGLAGES DE LA CARTE — La Petite Fée Bretonne
+//  RÉGLAGES DE LA CARTE — La petite fée bretonne
 // ============================================================
 window.PFB_CONFIG = {
   // Adresse de ta boutique (bouton affiché sur les départements à conquérir)
