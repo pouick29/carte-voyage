@@ -58,7 +58,7 @@ h1 {
 /* ----- carte ----- */
 .carte-cadre {
   background: #fff; border-radius: 22px; box-shadow: var(--ombre);
-  padding: 10px; margin-bottom: 14px;
+  padding: 10px; margin: 0 auto 14px; max-width: 700px;
 }
 .carte-host { position: relative; }
 .carte-svg { display: block; width: 100%; height: auto; max-height: 78vh; touch-action: pan-y pinch-zoom; user-select: none; -webkit-user-select: none; }
