@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Espace admin — La Petite Fée Bretonne</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600&family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main class="page">
+
+  <!-- ===== CONNEXION ===== -->
+  <section id="connexion" class="carte-connexion" hidden>
+    <h2>Espace admin 🧚‍♀️</h2>
+    <p>Connecte-toi pour mettre à jour la carte.</p>
+    <form id="form-connexion">
+      <label for="email">Adresse e-mail</label>
+      <input id="email" type="email" autocomplete="username" required>
+      <label for="mdp">Mot de passe</label>
+      <input id="mdp" type="password" autocomplete="current-password" required>
+      <button class="btn" type="submit" id="btn-connexion">Me connecter</button>
+      <div class="erreur" id="erreur" role="alert"></div>
+    </form>
+  </section>
+
+  <!-- ===== ADMIN ===== -->
+  <section id="admin" hidden>
+    <div class="barre-admin">
+      <strong>Espace admin 🩷</strong>
+      <span><span class="qui" id="qui"></span> <button class="btn secondaire" id="deco" type="button" style="padding:6px 14px">Me déconnecter</button></span>
+    </div>
+
+    <div class="onglets" role="tablist">
+      <button class="onglet" role="tab" id="t-france" aria-selected="true">France</button>
+      <button class="onglet" role="tab" id="t-monde" aria-selected="false">Monde 🌍</button>
+    </div>
+
+    <p class="aide">Touche un département (ou un pays) pour le colorier. Touche-le encore pour le retirer. C'est enregistré tout de suite ✨</p>
+
+    <section id="p-france">
+      <div class="compteur">
+        <div class="texte" id="c-france">🩷 <b>…</b> départements conquis sur 101</div>
+        <div class="barre"><i id="b-france"></i></div>
+      </div>
+      <div class="carte-cadre"><div id="m-france"></div></div>
+      <details class="liste" open>
+        <summary>Liste des départements</summary>
+        <input class="recherche" id="r-france" type="search" placeholder="Rechercher un département ou un numéro…" aria-label="Rechercher">
+        <ul class="lignes" id="l-france"></ul>
+      </details>
+    </section>
+
+    <section id="p-monde" hidden>
+      <div class="compteur">
+        <div class="texte" id="c-monde">🌍 <b>…</b> pays conquis</div>
+      </div>
+      <div class="carte-cadre"><div id="m-monde"></div></div>
+      <details class="liste" open>
+        <summary>Liste des pays</summary>
+        <input class="recherche" id="r-monde" type="search" placeholder="Rechercher un pays…" aria-label="Rechercher">
+        <ul class="lignes" id="l-monde"></ul>
+      </details>
+    </section>
+  </section>
+
+</main>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="config.js"></script>
+<script src="data.js"></script>
+<script src="carte.js"></script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+import { getFirestore, doc, getDoc, setDoc, onSnapshot, arrayUnion, arrayRemove, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+
+const $ = (id) => document.getElementById(id);
+const app = initializeApp(window.PFB_CONFIG.firebase);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+const etat = { france: new Set(), monde: new Set() };
+const jeux = {};
+let construit = false;
+let desabonner = [];
+
+/* ---------- message flottant ---------- */
+let tToast;
+function toast(msg, mauvais) {
+  const t = $('toast');
+  t.textContent = msg;
+  t.classList.toggle('mauvais', !!mauvais);
+  t.classList.add('visible');
+  clearTimeout(tToast);
+  tToast = setTimeout(() => t.classList.remove('visible'), mauvais ? 4500 : 2200);
+}
+
+/* ---------- affichage ---------- */
+function rafraichir(jeu) {
+  const j = jeux[jeu];
+  const valides = new Set([...etat[jeu]].filter((c) => j.carte.noms[c] !== undefined));
+  j.carte.maj(valides);
+  j.liste.maj(valides);
+  const n = valides.size;
+  if (jeu === 'france') {
+    $('c-france').innerHTML = '🩷 <b>' + n + '</b> département' + (n > 1 ? 's' : '') + ' conquis sur ' + j.carte.total;
+    $('b-france').style.width = (100 * n / j.carte.total) + '%';
+  } else {
+    $('c-monde').innerHTML = '🌍 <b>' + n + '</b> pays conquis';
+  }
+}
+
+/* ---------- un clic = ajouter ou retirer, enregistré tout de suite ---------- */
+async function basculer(jeu, code, nom) {
+  const aRetirer = etat[jeu].has(code);
+  const libelle = jeu === 'france' ? nom + ' (' + code + ')' : nom;
+  try {
+    await setDoc(doc(db, 'conquetes', jeu), {
+      codes: aRetirer ? arrayRemove(code) : arrayUnion(code),
+      maj: serverTimestamp()
+    }, { merge: true });
+    if (!aRetirer) jeux[jeu].carte.pop(code);
+    toast(aRetirer ? '↩️ ' + libelle + ' retiré' : '🩷 ' + libelle + ' conquis !');
+  } catch (e) {
+    console.error(e);
+    toast('Enregistrement impossible. Vérifie ta connexion et réessaie.', true);
+  }
+}
+
+function construire() {
+  if (construit) return;
+  construit = true;
+  ['france', 'monde'].forEach((jeu) => {
+    const onSelect = (code, nom) => basculer(jeu, code, nom);
+    const carte = PFB.creerCarte($('m-' + jeu), jeu, { onSelect });
+    const liste = PFB.creerListe($('l-' + jeu), carte, jeu, onSelect);
+    $('r-' + jeu).addEventListener('input', (e) => liste.filtrer(e.target.value));
+    jeux[jeu] = { carte, liste };
+    rafraichir(jeu);
+  });
+}
+
+async function demarrer() {
+  construire();
+  // première connexion : on enregistre les départements déjà conquis sur la carte papier
+  try {
+    const ref = doc(db, 'conquetes', 'france');
+    const snap = await getDoc(ref);
+    if (!snap.exists()) {
+      await setDoc(ref, { codes: window.PFB_DEPART, maj: serverTimestamp() });
+      toast('Tes 25 premiers départements ont été enregistrés 🩷');
+    }
+  } catch (e) { console.error(e); toast('Impossible de lire la base de données.', true); }
+  desabonner.forEach((f) => f());
+  desabonner = ['france', 'monde'].map((jeu) =>
+    onSnapshot(doc(db, 'conquetes', jeu), (snap) => {
+      etat[jeu] = new Set(snap.exists() ? (snap.data().codes || []) : []);
+      rafraichir(jeu);
+    }, (err) => { console.error(err); toast('Accès refusé : ce compte ne peut pas modifier la carte.', true); })
+  );
+}
+
+/* ---------- connexion ---------- */
+onAuthStateChanged(auth, (user) => {
+  if (user) {
+    $('connexion').hidden = true;
+    $('admin').hidden = false;
+    $('qui').textContent = user.email;
+    demarrer();
+  } else {
+    desabonner.forEach((f) => f());
+    desabonner = [];
+    $('admin').hidden = true;
+    $('connexion').hidden = false;
+  }
+});
+
+$('form-connexion').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  $('erreur').textContent = '';
+  const b = $('btn-connexion');
+  b.disabled = true; b.textContent = 'Connexion…';
+  try {
+    await signInWithEmailAndPassword(auth, $('email').value.trim(), $('mdp').value);
+  } catch (err) {
+    const c = err && err.code || '';
+    $('erreur').textContent =
+      (c === 'auth/invalid-credential' || c === 'auth/wrong-password' || c === 'auth/user-not-found' || c === 'auth/invalid-email')
+        ? 'E-mail ou mot de passe incorrect.'
+        : c === 'auth/too-many-requests' ? 'Trop d’essais. Réessaie dans quelques minutes.'
+        : 'Connexion impossible (' + c + ').';
+  } finally {
+    b.disabled = false; b.textContent = 'Me connecter';
+  }
+});
+$('deco').addEventListener('click', () => signOut(auth));
+
+/* ---------- onglets ---------- */
+function ouvrir(jeu) {
+  ['france', 'monde'].forEach((j) => {
+    $('p-' + j).hidden = j !== jeu;
+    $('t-' + j).setAttribute('aria-selected', j === jeu ? 'true' : 'false');
+  });
+}
+$('t-france').addEventListener('click', () => ouvrir('france'));
+$('t-monde').addEventListener('click', () => ouvrir('monde'));
+</script>
+</body>
+</html>
